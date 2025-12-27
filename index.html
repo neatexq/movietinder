@@ -2,123 +2,159 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Tinder: Fixed Flip</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Movie Tinder Mobile</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #0a0a0b; --card-bg: #16161a; --accent: #ff2e4d; --text: #efefef; --gray: #888; --gold: #f5c518; --blue: #2e93ff; }
         
-        body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        header { width: 100%; background: #000; display: flex; justify-content: center; gap: 40px; padding: 15px 0; border-bottom: 1px solid #222; flex-shrink: 0; }
-        .nav-link { cursor: pointer; opacity: 0.5; transition: 0.3s; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .nav-link.active { opacity: 1; color: var(--accent); }
-
-        #app-root { display: flex; flex: 1; overflow: hidden; width: 100%; }
-
-        main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto; background: radial-gradient(circle at top, #1a1a2e 0%, #0a0a0b 100%); }
-        .movie-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
-
-        .sidebar { width: 320px; background: #111114; border-left: 1px solid #222; padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; flex-shrink: 0; }
-        .filter-item { display: flex; flex-direction: column; gap: 8px; }
-        .filter-item label { font-size: 11px; color: var(--gray); font-weight: 800; text-transform: uppercase; }
-        .filter-item input, .filter-item select { background: #2a2a32; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; font-family: inherit; outline: none; }
-
-        /* --- ИСПРАВЛЕННАЯ 3D СЦЕНА --- */
-        .card-scene { perspective: 1200px; width: 380px; height: 530px; cursor: pointer; position: relative; }
-        
-        .card-body { 
-            width: 100%; height: 100%; 
-            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Добавил красивую пружинистость */
-            transform-style: preserve-3d; 
-            position: relative; 
-        }
-        
-        .card-body.is-flipped { transform: rotateY(180deg); }
-        
-        .card-side { 
-            position: absolute; width: 100%; height: 100%; 
-            backface-visibility: hidden; 
-            -webkit-backface-visibility: hidden; /* Для Safari */
-            border-radius: 30px; overflow: hidden; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
-            border: 1px solid rgba(255,255,255,0.1); 
-        }
-
-        /* Лицевая сторона */
-        .side-front { background: #000; transform: rotateY(0deg); }
-        
-        /* Задняя сторона */
-        .side-back { 
-            background: #16161a; 
-            transform: rotateY(180deg); 
-            padding: 30px; 
-            box-sizing: border-box; 
+        body { 
+            font-family: 'Manrope', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
             display: flex; 
             flex-direction: column; 
-            border: 1px solid var(--accent); 
+            height: 100vh; 
+            height: -webkit-fill-available; /* Для iOS */
+            overflow: hidden; 
         }
+
+        /* Шапка */
+        header { 
+            width: 100%; 
+            background: #000; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 15px 20px; 
+            border-bottom: 1px solid #222; 
+            flex-shrink: 0; 
+            z-index: 100;
+        }
+        .nav-group { display: flex; gap: 20px; }
+        .nav-link { cursor: pointer; opacity: 0.5; transition: 0.3s; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-link.active { opacity: 1; color: var(--accent); }
+
+        /* Кнопка фильтров для мобилок */
+        .filter-toggle { display: none; background: #222; border: none; color: white; padding: 8px 15px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; }
+
+        #app-root { display: flex; flex: 1; overflow: hidden; width: 100%; position: relative; }
+
+        main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 10px; 
+            overflow-y: auto; 
+            background: radial-gradient(circle at top, #1a1a2e 0%, #0a0a0b 100%); 
+            width: 100%;
+        }
+
+        .movie-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: center; }
+
+        /* Боковая панель / Меню фильтров */
+        .sidebar { 
+            width: 320px; 
+            background: #111114; 
+            border-left: 1px solid #222; 
+            padding: 25px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            overflow-y: auto; 
+            flex-shrink: 0; 
+            transition: transform 0.3s ease;
+        }
+
+        /* 3D КАРТОЧКА */
+        .card-scene { perspective: 1200px; width: 100%; max-width: 360px; aspect-ratio: 2/3; cursor: pointer; position: relative; }
+        .card-body { width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; position: relative; }
+        .card-body.is-flipped { transform: rotateY(180deg); }
+        .card-side { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 25px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+
+        .side-front { background: #000; transform: rotateY(0deg); }
+        .side-back { background: #16161a; transform: rotateY(180deg); padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; border: 1px solid var(--accent); }
 
         .poster-img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Рейтинг: исчезает при перевороте */
         .rating-box { 
-            position: absolute; top: 20px; right: 20px; 
-            background: rgba(0,0,0,0.85); padding: 8px 15px; border-radius: 12px; 
+            position: absolute; top: 15px; right: 15px; 
+            background: rgba(0,0,0,0.85); padding: 6px 12px; border-radius: 10px; 
             color: var(--gold); font-weight: 800; border: 1px solid var(--gold); 
-            z-index: 10; text-align: right;
-            transition: opacity 0.2s ease;
+            z-index: 10; text-align: right; transition: opacity 0.2s ease;
         }
-        /* Когда карточка перевернута, скрываем рейтинг, чтобы он не просвечивал */
         .card-body.is-flipped .rating-box { opacity: 0; pointer-events: none; }
 
-        .movie-info-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 30px 20px; background: linear-gradient(transparent, rgba(0,0,0,0.95)); }
-        
-        .genre-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0 0; }
-        .genre-tag { font-size: 10px; background: rgba(255,255,255,0.15); color: #fff; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); }
+        .movie-info-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 25px 15px; background: linear-gradient(transparent, rgba(0,0,0,0.95) 80%); }
+        .movie-info-bottom h2 { font-size: 1.4rem; margin: 0; }
 
-        .plot-text { line-height: 1.6; color: #ccc; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
-        
-        .control-btns { display: flex; gap: 20px; margin-top: 25px; align-items: center; }
-        .btn-round { border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-        .btn-main { width: 70px; height: 70px; border-radius: 50%; font-size: 28px; }
-        .btn-small { width: 55px; height: 55px; border-radius: 50%; font-size: 20px; }
-        
+        .genre-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+        .genre-tag { font-size: 9px; background: rgba(255,255,255,0.15); color: #fff; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
+
+        .plot-text { line-height: 1.5; color: #ccc; font-size: 13px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; }
+
+        /* Кнопки управления */
+        .control-btns { display: flex; gap: 15px; margin: 20px 0; align-items: center; }
+        .btn-round { border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-main { width: 65px; height: 65px; border-radius: 50%; font-size: 24px; }
+        .btn-small { width: 50px; height: 50px; border-radius: 50%; font-size: 18px; }
         .btn-dislike { background: #fff; color: #ff2e4d; }
         .btn-like { background: var(--accent); color: #fff; }
         .btn-watched { background: var(--blue); color: #fff; }
-        .btn-round:hover { transform: scale(1.15); }
 
-        .trailer-group { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
-        .btn-trailer { padding: 12px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .trailer-group { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+        .btn-trailer { padding: 12px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 10px; width: 100%; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: var(--card-bg); padding: 35px; border-radius: 30px; max-width: 600px; width: 100%; position: relative; border: 1px solid #333; }
-        
-        .fav-card { display: flex; gap: 15px; background: #1a1a22; padding: 12px; border-radius: 15px; margin-bottom: 12px; border: 1px solid #333; }
-        .fav-card img { width: 60px; border-radius: 8px; }
+        /* АДАПТИВНОСТЬ ДЛЯ МОБИЛОК */
+        @media (max-width: 768px) {
+            .sidebar { 
+                position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; 
+                transform: translateX(-100%); width: 280px; box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+            }
+            .sidebar.is-open { transform: translateX(0); }
+            .filter-toggle { display: block; }
+            
+            .card-scene { width: 92vw; max-width: 340px; }
+            .control-btns { gap: 25px; }
+            .btn-main { width: 75px; height: 75px; } /* Чуть больше на мобилке для удобства */
+        }
 
-        .error-msg { background: rgba(255,0,0,0.1); color: #ff5f5f; padding: 20px; border-radius: 15px; border: 1px solid red; text-align: center; }
+        /* Оверлей для закрытия меню */
+        .sidebar-overlay { 
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(0,0,0,0.7); z-index: 999; 
+        }
+        .sidebar-overlay.is-visible { display: block; }
+
+        .fav-card { display: flex; gap: 12px; background: #1a1a22; padding: 10px; border-radius: 15px; margin-bottom: 10px; align-items: center; }
+        .fav-card img { width: 50px; height: 75px; object-fit: cover; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div id="app">
     <header>
-        <div class="nav-link" :class="{active: currentTab === 'matcher'}" @click="currentTab = 'matcher'">Подбор</div>
-        <div class="nav-link" :class="{active: currentTab === 'favorites'}" @click="currentTab = 'favorites'">Лайки ({{favorites.length}})</div>
-    </header>
+        <button class="filter-toggle" @click="mobileMenuOpen = true">Фильтры</button>
+        <div class="nav-group">
+            <div class="nav-link" :class="{active: currentTab === 'matcher'}" @click="currentTab = 'matcher'">Подбор</div>
+            <div class="nav-link" :class="{active: currentTab === 'favorites'}" @click="currentTab = 'favorites'">Лайки ({{favorites.length}})</div>
+        </div>
+        <div style="width: 60px;" class="filter-toggle"></div> </header>
 
     <div id="app-root">
+        <div class="sidebar-overlay" :class="{'is-visible': mobileMenuOpen}" @click="mobileMenuOpen = false"></div>
+
         <main>
-            <div v-if="apiError" class="error-msg">
-                <b>Ошибка доступа!</b><br>Вставьте ваш API KEY в код (строка 302).
-            </div>
+            <div v-if="apiError" class="error-msg">Ошибка API Ключа.</div>
 
             <div v-if="currentTab === 'matcher' && !apiError" class="movie-container">
-                <div v-if="loading" style="margin-top: 100px;">Ищем контент...</div>
+                <div v-if="loading" style="margin-top: 50px;">Загрузка...</div>
 
                 <div v-else-if="currentMovie" class="card-scene" @click="isFlipped = !isFlipped">
                     <div class="card-body" :class="{'is-flipped': isFlipped}">
@@ -126,12 +162,12 @@
                         <div class="card-side side-front">
                             <div class="rating-box">
                                 ⭐ {{ currentMovie.vote_average }}<br>
-                                <small style="font-size:9px; opacity:0.7;">🗣 {{ formatVotes(currentMovie.vote_count) }}</small>
+                                <small style="font-size:8px; opacity:0.7;">🗣 {{ formatVotes(currentMovie.vote_count) }}</small>
                             </div>
                             <img :src="'https://image.tmdb.org/t/p/w500' + currentMovie.poster_path" class="poster-img">
                             <div class="movie-info-bottom">
-                                <h2 style="margin:0; font-size: 1.6rem;">{{ currentMovie.title || currentMovie.name }}</h2>
-                                <p style="color:#aaa; margin: 5px 0 0 0; font-size: 0.85rem;">{{ getYear(currentMovie) }} • {{ runtimeInfo }}</p>
+                                <h2>{{ currentMovie.title || currentMovie.name }}</h2>
+                                <p style="color:#aaa; margin: 4px 0; font-size: 12px;">{{ getYear(currentMovie) }} • {{ runtimeInfo }}</p>
                                 <div class="genre-list">
                                     <span v-for="gid in currentMovie.genre_ids" :key="gid" class="genre-tag">{{ genreMap[gid] || '...' }}</span>
                                 </div>
@@ -139,17 +175,17 @@
                         </div>
 
                         <div class="card-side side-back">
-                            <h3 style="margin: 0 0 10px 0; color: var(--accent); font-size: 14px;">СЮЖЕТ</h3>
+                            <h3 style="margin: 0 0 10px 0; color: var(--accent); font-size: 12px; text-transform: uppercase;">Сюжет</h3>
                             <p class="plot-text">{{ currentMovie.overview || 'Описание отсутствует.' }}</p>
-                            <button v-if="currentMovie.overview && currentMovie.overview.length > 200" class="btn-trailer" style="background:none; color:var(--accent); text-align:left; padding:0" @click.stop="showFullDescription = true">Читать далее</button>
+                            <button v-if="currentMovie.overview && currentMovie.overview.length > 200" 
+                                    class="btn-trailer" style="background:none; color:var(--accent); text-align:left; padding:0" 
+                                    @click.stop="showFullDescription = true">Читать далее...</button>
                             
                             <div class="trailer-group">
                                 <button v-if="trailerRu" class="btn-trailer" style="background: var(--accent); color: white;" @click.stop="watchTrailer(trailerRu)">▶ Трейлер RU</button>
                                 <button v-if="trailerEn" class="btn-trailer" style="background: white; color: black;" @click.stop="watchTrailer(trailerEn)">▶ Trailer EN</button>
-                                <div v-if="!trailerRu && !trailerEn" style="text-align:center; color:#555; font-size:12px; margin-top:10px;">Трейлеры не найдены</div>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -157,29 +193,34 @@
                     <button class="btn-round btn-main btn-dislike" @click="nextMovie">✕</button>
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <button class="btn-round btn-small btn-watched" @click="markAsWatched">👁</button>
-                        <span style="font-size:10px; font-weight:800; margin-top:4px; color:var(--gray); text-transform:uppercase;">Смотрел</span>
+                        <span style="font-size:9px; font-weight:800; margin-top:4px; color:var(--gray);">СМОТРЕЛ</span>
                     </div>
                     <button class="btn-round btn-main btn-like" @click="saveToFavs">❤</button>
                 </div>
             </div>
 
-            <div v-if="currentTab === 'favorites'" style="width: 100%; max-width: 500px;">
-                <h2 style="margin-bottom: 20px;">Мой список</h2>
+            <div v-if="currentTab === 'favorites'" style="width: 100%; max-width: 400px; padding: 10px;">
+                <h2 style="font-size: 1.5rem;">Мой список</h2>
                 <div v-for="fav in favorites" :key="fav.id" class="fav-card">
                     <img :src="'https://image.tmdb.org/t/p/w200' + fav.poster_path">
-                    <div>
-                        <h4 style="margin: 0 0 5px 0;">{{ fav.title || fav.name }}</h4>
-                        <p style="color: var(--gold); margin: 0; font-size: 13px;">⭐ {{ fav.vote_average }} ({{ getYear(fav) }})</p>
-                        <button @click="removeFromFavs(fav.id)" style="background:none; border:none; color:red; padding:0; cursor:pointer; font-size:11px; margin-top:5px;">Удалить</button>
+                    <div style="flex:1">
+                        <h4 style="margin: 0; font-size: 14px;">{{ fav.title || fav.name }}</h4>
+                        <p style="color: var(--gold); margin: 2px 0; font-size: 12px;">⭐ {{ fav.vote_average }} ({{ getYear(fav) }})</p>
                     </div>
+                    <button @click="removeFromFavs(fav.id)" style="background:none; border:none; color:red; font-size:20px; cursor:pointer;">&times;</button>
                 </div>
+                <p v-if="favorites.length === 0" style="text-align:center; color:var(--gray); margin-top:40px;">Здесь пока пусто</p>
             </div>
         </main>
 
-        <aside v-if="currentTab === 'matcher'" class="sidebar">
-            <h3 style="margin:0;">Фильтры</h3>
+        <aside class="sidebar" :class="{'is-open': mobileMenuOpen}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">Фильтры</h3>
+                <button @click="mobileMenuOpen = false" class="filter-toggle">Готово</button>
+            </div>
+            
             <div class="filter-item">
-                <label>Тип контента</label>
+                <label>Тип</label>
                 <select v-model="filters.type" @change="onTypeChange">
                     <option value="movie">Фильмы</option>
                     <option value="tv">Сериалы</option>
@@ -195,47 +236,46 @@
             </div>
 
             <div class="filter-item">
-                <label>Популярность (голоса)</label>
+                <label>Минимум голосов (голоса)</label>
                 <select v-model="filters.minVotes" @change="refreshData">
-                    <option value="100">Любые (100+)</option>
-                    <option value="500">Популярные (500+)</option>
-                    <option value="2000">Известные (2000+)</option>
-                    <option value="5000">Мировые хиты (5000+)</option>
+                    <option value="100">100+</option>
+                    <option value="500">500+</option>
+                    <option value="2000">2000+</option>
+                    <option value="5000">5000+</option>
                 </select>
             </div>
 
             <div class="filter-item">
-                <label>Мин. рейтинг ⭐</label>
+                <label>Рейтинг от ⭐</label>
                 <input type="number" v-model="filters.minRating" step="0.5" max="10">
             </div>
 
             <div class="filter-item">
-                <label>Год выпуска от</label>
+                <label>Год от</label>
                 <input type="number" v-model="filters.yearFrom">
             </div>
 
-            <button class="btn-trailer" style="background: var(--accent); color: white;" @click="refreshData">Применить</button>
-            <hr style="border:0; border-top:1px solid #333; width:100%">
-            <p style="font-size:11px; color:var(--gray); text-align:center;">В скрытых: {{watchedIds.length}} шт.</p>
+            <button class="btn-trailer" style="background: var(--accent); color: white;" @click="applyFilters">Применить</button>
+            <p style="font-size:10px; color:var(--gray); text-align:center;">Скрыто просмотренных: {{watchedIds.length}}</p>
         </aside>
     </div>
 
     <div v-if="showFullDescription" class="modal-overlay" @click="showFullDescription = false">
         <div class="modal-card" @click.stop>
-            <h2 style="margin:0 0 15px 0; color:var(--accent);">{{ currentMovie.title || currentMovie.name }}</h2>
-            <p style="line-height: 1.7; color: #ddd; max-height: 400px; overflow-y: auto;">{{ currentMovie.overview }}</p>
-            <button class="btn-trailer" style="width: 100%; background: #333; color: white; margin-top: 20px;" @click="showFullDescription = false">Закрыть</button>
+            <h2 style="margin:0 0 15px 0; color:var(--accent); font-size: 1.2rem;">{{ currentMovie.title || currentMovie.name }}</h2>
+            <p style="line-height: 1.6; color: #ddd; max-height: 60vh; overflow-y: auto; font-size: 14px;">{{ currentMovie.overview }}</p>
+            <button class="btn-trailer" style="background: #333; color: white; margin-top: 20px;" @click="showFullDescription = false">Назад</button>
         </div>
     </div>
 </div>
 
 <script>
-    const API_KEY = 'a9eafe991ab45b15460e48dd0781b152'; // <--- ВСТАВИТЬ КЛЮЧ ТУТ
+    const API_KEY = 'a9eafe991ab45b15460e48dd0781b152';
 
     new Vue({
         el: '#app',
         data: {
-            currentTab: 'matcher', loading: true, apiError: false,
+            currentTab: 'matcher', loading: true, apiError: false, mobileMenuOpen: false,
             movieList: [], movieIndex: 0, isFlipped: false, showFullDescription: false,
             runtimeInfo: '', trailerRu: null, trailerEn: null, 
             genreMap: {}, movieGenres: [], tvGenres: [], 
@@ -248,10 +288,14 @@
             currentGenreList() { return this.filters.type === 'movie' ? this.movieGenres : this.tvGenres; }
         },
         mounted() {
-            if (!API_KEY || API_KEY.includes('ВАШ_API')) { this.apiError = true; } 
-            else { this.loadGenres(); this.refreshData(); }
+            this.loadGenres(); 
+            this.refreshData();
         },
         methods: {
+            applyFilters() {
+                this.mobileMenuOpen = false;
+                this.refreshData();
+            },
             async loadGenres() {
                 try {
                     const [resM, resT] = await Promise.all([
@@ -270,8 +314,8 @@
             async refreshData() {
                 this.loading = true;
                 try {
-                    const page = Math.floor(Math.random() * 5) + 1;
-                    let url = `https://api.themoviedb.org/3/discover/${this.filters.type}?api_key=${API_KEY}&language=ru-RU&sort_by=popularity.desc&vote_count.gte=${this.filters.minVotes}&vote_average.gte=${this.filters.minRating}&primary_release_date.gte=${this.filters.yearFrom}-01-01&page=${page}`;
+                    const page = Math.floor(Math.random() * 8) + 1;
+                    let url = `https://api.themoviedb.org/3/discover/${this.filters.type}?api_key=${API_KEY}&language=ru-RU&sort_by=popularity.desc&vote_count.gte=${this.filters.minVotes}&vote_average.gte=${this.filters.minRating}&primary_release_date.gte=${this.filters.yearFrom}-01-01&first_air_date.gte=${this.filters.yearFrom}-01-01&page=${page}`;
                     if (this.filters.genre) url += `&with_genres=${this.filters.genre}`;
 
                     const res = await axios.get(url);
@@ -288,9 +332,11 @@
                 try {
                     const det = await axios.get(`https://api.themoviedb.org/3/${this.filters.type}/${id}?api_key=${API_KEY}&language=ru-RU`);
                     this.runtimeInfo = this.filters.type === 'movie' ? det.data.runtime + ' мин.' : det.data.number_of_seasons + ' сез.';
+                    
                     const vRu = await axios.get(`https://api.themoviedb.org/3/${this.filters.type}/${id}/videos?api_key=${API_KEY}&language=ru-RU`);
                     const tRu = vRu.data.results.find(v => v.type === 'Trailer');
                     if (tRu) this.trailerRu = 'https://www.youtube.com/watch?v=' + tRu.key;
+
                     const vEn = await axios.get(`https://api.themoviedb.org/3/${this.filters.type}/${id}/videos?api_key=${API_KEY}`);
                     const tEn = vEn.data.results.find(v => v.type === 'Trailer');
                     if (tEn) this.trailerEn = 'https://www.youtube.com/watch?v=' + tEn.key;
@@ -324,5 +370,4 @@
     });
 </script>
 </body>
-
 </html>
